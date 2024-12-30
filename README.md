@@ -1,4 +1,10 @@
 # ComicsApp Documentation
+## Запуск контейнера сервера
+```
+docker build -t comics_app_server .
+docker run -d -p 5000:5000 --name flask_container comics_app_server
+```
+
 ## DataBase
 ### Table *files*
 Записи с 0 до 20 включительно зарезирвированы для картинок по умолчанию
