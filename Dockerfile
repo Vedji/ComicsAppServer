@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 5000
 
 # Запускаем Flask-приложение
-CMD ["python", "app.py"]
+CMD ["python", "main.py"]
