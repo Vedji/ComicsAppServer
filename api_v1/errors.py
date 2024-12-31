@@ -1,5 +1,6 @@
 from flask import jsonify
 
+from api_v1.db_data_returns import Files
 
 class FileErrors:
 
@@ -10,6 +11,30 @@ class FileErrors:
             "error": "FileNotFount",
             "code": 404
         }), 404
+
+    @staticmethod
+    def file_not_uploaded():
+        return jsonify({
+            "message": "File not uploaded!",
+            "error": "FileNotUpload",
+            "code": 400
+        }), 400
+
+    @staticmethod
+    def file_not_selected():
+        return jsonify({
+            "message": "File not selected!",
+            "error": "FileNotSelected",
+            "code": 400
+        }), 400
+
+    @staticmethod
+    def other_errors_with_file(e: all):
+        return jsonify({
+            "message": str(e),
+            "error": type(str(e)),
+            "code": 500
+        }), 500
 
 
 class BooksCatalogErrors:
