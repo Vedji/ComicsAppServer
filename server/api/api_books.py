@@ -1,7 +1,7 @@
 import os.path
 from re import search
 
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy import or_, not_
 
@@ -188,7 +188,7 @@ def upload_file():
     )
     if not new_book.add_book():
         return ExtensionsReturned.upload_error("DBBooks", new_book.__str__())
-    file_path = Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY + f"\\manga\\book_{new_book.book_id}\\"
+    file_path = Config.linux_path(Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY + f"\\manga\\book_{new_book.book_id}\\")
     if os.path.exists(file_path) and os.path.isdir(file_path):
         os.rmdir(file_path)
     if os.path.exists(file_path) and os.path.isfile(file_path):
@@ -198,7 +198,7 @@ def upload_file():
     file = request.files['bookTitleImage']
     if not file or file.filename == '':
         return ExtensionsReturned.invalid_field("bookTitleImage", "no value")
-    file.save(file_path + f"timage.{file.mimetype.split('/')[-1]}")
+    file.save(Config.linux_path(file_path + f"timage.{file.mimetype.split('/')[-1]}"))
     file_row = DBFiles(
         added_by = current_user_id,
         file_path =  f"manga\\book_{new_book.book_id}\\",

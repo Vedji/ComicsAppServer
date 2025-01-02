@@ -110,10 +110,10 @@ def add_book_chapter_page(book_id: int, chapter_id: int):
         for file_path in glob.glob(file_pattern):
             print("DELETED: ", file_path)
             os.remove(file_path)
-        file.save(
+        file.save(Config.linux_path(
             f"{Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY}\\manga\\book_{book_edit.book_id}"
             f"\\chapter_{chapter_id}\\page_{added_page.page_id}." + file.filename.split('.')[-1]
-        )
+        ))
         new_file = DBFiles(
             added_by = user_who_added.user_id,
             file_path = f"manga\\book_{book_edit.book_id}\\chapter_{chapter_id}\\",
@@ -209,15 +209,15 @@ def edit_book_chapter_page(book_id: int, chapter_id: int, page_id: int):
     if file.filename == '' or not file:
         return ExtensionsReturned.invalid_field("file", "None")
     try:
-        file_pattern = (f"{Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY}\\manga"
-                        f"\\book_{book_edit.book_id}\\chapter_{chapter_id}\\page_{page.page_id}.*")
+        file_pattern = Config.linux_path((f"{Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY}\\manga"
+                        f"\\book_{book_edit.book_id}\\chapter_{chapter_id}\\page_{page.page_id}.*"))
         for file_path in glob.glob(file_pattern):
             print("DELETED: ", file_path)
-            os.remove(file_path)
-        file.save(
+            os.remove(Config.linux_path(file_path))
+        file.save(Config.linux_path(
             f"{Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY}\\manga\\book_{book_edit.book_id}"
             f"\\chapter_{chapter_id}\\page_{page.page_id}." + file.filename.split('.')[-1]
-        )
+        ))
         new_file = DBFiles(
             added_by=user_who_added.user_id,
             file_path=f"manga\\book_{book_edit.book_id}\\chapter_{chapter_id}\\",
@@ -276,9 +276,9 @@ def delete_book_chapter_page(book_id: int, chapter_id: int, page_id: int):
         db.session.delete(page)
 
         file_path = f"{Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY}\\{file_path}\\{file_name}"
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            print("DELETED: ", file_path)
-            os.remove(file_path)
+        if os.path.exists(Config.linux_path(file_path)) and os.path.isfile(Config.linux_path(file_path)):
+            print("DELETED: ", Config.linux_path(file_path))
+            os.remove(Config.linux_path(file_path))
         else:
             raise ValueError(f"file_path = '{file_path}' error delete!")
         db.session.commit()

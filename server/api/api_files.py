@@ -24,19 +24,19 @@ def get_file(file_id: int):
     file_path = Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY
     if file_id < 0:
         return send_file(
-            file_path + "\\_default\\file_not_found.jpg",
+            Config.linux_path(file_path + "\\_default\\file_not_found.jpg"),
             download_name='file_not_found.jpg',
             mimetype='image/jpeg'
         )
     file_info = DBFiles.query.filter(DBFiles.file_id == file_id).first()
     if not file_info:
         return send_file(
-            file_path + "\\_default\\file_not_found.jpg",
+            Config.linux_path(file_path + "\\_default\\file_not_found.jpg"),
             download_name='file_not_found.jpg',
             mimetype='image/jpeg'
         )
     return send_file(
-        file_path + "\\" + file_info.file_path + file_info.file_name,
+        Config.linux_path(file_path + "\\" + file_info.file_path + file_info.file_name),
         download_name=file_info.file_name,
         mimetype=file_info.file_type
     )
