@@ -21,8 +21,8 @@ class Config:
         return path
 
     DATE_FORMAT = "%H:%M:%S %d-%m-%Y"
-    PROJECT_DIRECTORY = linux_path(os.getcwd())
-    DATA_DIRECTORY = linux_path('\\data')
+    PROJECT_DIRECTORY = os.getcwd()
+    DATA_DIRECTORY = '/data'
 
 
 
