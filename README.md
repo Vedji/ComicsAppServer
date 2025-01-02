@@ -1,8 +1,8 @@
 # ComicsApp Documentation
 ## Запуск контейнера сервера
 ```
-docker build -t comics_app_server .
-docker run -d -p 5000:5000 --name flask_container comics_app_server
+cd ComicsAppServer/
+docker-compose up --build -d
 ```
 
 ## DataBase
