@@ -1,12 +1,12 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  flask-app:
+  comics-app:
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./app:/app
+      - ./data:/app/data  # Подключаем папку data как volume
     ports:
-      - "5000:5000"
-    container_name: flask-app-container
+      - "5000:5000"  # Пробрасываем порт 5000 для Flask
+    container_name: comics-app-container
