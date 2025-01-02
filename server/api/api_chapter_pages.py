@@ -273,16 +273,17 @@ def delete_book_chapter_page(book_id: int, chapter_id: int, page_id: int):
         file_name = file_row.file_name
 
         db.session.delete(page)
+        db.session.commit()
+
         if file_id > 20:
             db.session.delete(file_row)
-
-        file_path = f"{Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY}\\{file_path}\\{file_name}"
-        if os.path.exists(Config.linux_path(file_path)) and os.path.isfile(Config.linux_path(file_path)):
-            print("DELETED: ", Config.linux_path(file_path))
-            os.remove(Config.linux_path(file_path))
-        else:
-            raise ValueError(f"file_path = '{file_path}' error delete!")
-        db.session.commit()
+            file_path = f"{Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY}\\{file_path}\\{file_name}"
+            if os.path.exists(Config.linux_path(file_path)) and os.path.isfile(Config.linux_path(file_path)):
+                print("DELETED: ", Config.linux_path(file_path))
+                os.remove(Config.linux_path(file_path))
+            else:
+                raise ValueError(f"file_path = '{file_path}' error delete!")
+            db.session.commit()
 
     except Exception as e:
         logging.error(f"Ошибка при удалении: {e}, в модели {page.__repr__()}.")
