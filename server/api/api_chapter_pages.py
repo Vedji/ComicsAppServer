@@ -271,9 +271,10 @@ def delete_book_chapter_page(book_id: int, chapter_id: int, page_id: int):
             raise ValueError(f"file_id with id equals '{file_id}' is not exists!")
         file_path = file_row.file_path
         file_name = file_row.file_name
+
+        db.session.delete(page)
         if file_id > 20:
             db.session.delete(file_row)
-        db.session.delete(page)
 
         file_path = f"{Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY}\\{file_path}\\{file_name}"
         if os.path.exists(Config.linux_path(file_path)) and os.path.isfile(Config.linux_path(file_path)):
