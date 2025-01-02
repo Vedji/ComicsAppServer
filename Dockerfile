@@ -1,17 +1,15 @@
-# Используем базовый образ Ubuntu 24
-FROM ubuntu:24.04
-
-# Устанавливаем зависимости для Python и pip
-RUN apt-get update && apt-get install -y python3 python3-pip
+# Используем базовый образ Python
+FROM python:3.9-slim
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем файлы приложения в контейнер
-COPY app/ /app/
+# Копируем requirements.txt и устанавливаем зависимости
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Устанавливаем зависимости из requirements.txt
-RUN pip3 install -r requirements.txt
+# Копируем весь проект
+COPY . .
 
-# Указываем команду запуска
-CMD ["python3", "app.py"]
+# Команда для запуска приложения
+CMD ["python", "server/app.py"]
