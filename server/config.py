@@ -15,16 +15,24 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=30)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
+    @staticmethod
+    def linux_path(path: str) -> str:
+        path = path.replace('\\', '/', -1)
+        return path
+
     DATE_FORMAT = "%H:%M:%S %d-%m-%Y"
-    PROJECT_DIRECTORY = os.getcwd()
-    DATA_DIRECTORY = '\\data'
+    PROJECT_DIRECTORY = linux_path(os.getcwd())
+    DATA_DIRECTORY = linux_path('\\data')
+
+
+
 
     @staticmethod
     def load_config(file_name: str = 'config.txt'):
         # if not os.path.exists(os.getcwd() + "\\" + file_name):
         #     return
-        print("Load from config file:",  os.getcwd() + "\\" + file_name)
-        file = open(os.getcwd() + "\\" + file_name, 'r', encoding='utf-8')
+
+        file = open(Config.linux_path(os.getcwd() + "\\" + file_name), 'r', encoding='utf-8')
         for line in file.readlines():
             line = line.replace('\n', '', -1)
             line = line.replace(' ', '', -1)
@@ -37,25 +45,35 @@ class Config:
             field, value = line.split("===")
             if 'SQLALCHEMY_DATABASE_URI' in field:
                 Config.SQLALCHEMY_DATABASE_URI = value
+                print(f"filed = '{field}', value = '{value}'")
             if 'JWT_SECRET_KEY' in field:
                 Config.JWT_SECRET_KEY = value
-            if 'PROJECT_DIRECTORY' in field:
-                Config.PROJECT_DIRECTORY = value
+                print(f"filed = '{field}', value = '{value}'")
+            if 'PROJECT_DIRECTORY' in  field:
+                Config.PROJECT_DIRECTORY = Config.linux_path(value)
+                print(f"filed = '{field}', value = '{Config.linux_path(value)}'")
             if 'DATA_DIRECTORY' in field:
-                Config.DATA_DIRECTORY = value
+                Config.DATA_DIRECTORY = Config.linux_path(value)
+                print(f"filed = '{field}', value = '{Config.linux_path(value)}'")
             if 'DATE_FORMAT' in field:
                 Config.DATE_FORMAT = value
+                print(f"filed = '{field}', value = '{value}'")
             if 'SQLALCHEMY_TRACK_MODIFICATIONS' in field:
                 Config.SQLALCHEMY_TRACK_MODIFICATIONS = bool(int(value))
+                print(f"filed = '{field}', value = '{bool(int(value))}'")
             if 'SQLALCHEMY_POOL_SIZE' in field:
                 Config.SQLALCHEMY_POOL_SIZE = int(value)
+                print(f"filed = '{field}', value = '{int(value)}'")
             if 'SQLALCHEMY_POOL_TIMEOUT' in field:
                 Config.SQLALCHEMY_POOL_TIMEOUT  = int(value)
+                print(f"filed = '{field}', value = '{int(value)}'")
             if 'SQLALCHEMY_POOL_TIMEOUT' in field:
                 Config.SQLALCHEMY_POOL_TIMEOUT  = int(value)
+                print(f"filed = '{field}', value = '{int(value)}'")
             if 'SQLALCHEMY_POOL_RECYCLE ' in field:
                 Config.SQLALCHEMY_POOL_RECYCLE   = int(value)
-            print(f"filed = '{field}', value = '{value}'")
+                print(f"filed = '{field}', value = '{int(value)}'")
+
         file.close()
         # for i in file.read():
         #     print(file)
