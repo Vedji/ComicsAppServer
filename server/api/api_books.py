@@ -85,7 +85,8 @@ def get_book_list():
     if arg_sort_by == "addedDESC":  # по убыванию названия дате добавления
         catalog_query = catalog_query.order_by(DBBooks.created_at.desc())
 
-    total_items_count = catalog_query.count()
+    total_items_count = len(catalog_query.all())
+
     if arg_offset:
         catalog_query = catalog_query.offset(arg_offset)
     if arg_limit:
