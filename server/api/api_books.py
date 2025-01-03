@@ -49,7 +49,7 @@ def get_book_list():
     genres_id = request.args.getlist('genreID', int)
 
     catalog_query = DBBooks.query
-    total_items_count = DBBooks.query.count()
+
 
     # Поиск по названию и описанию
     if arg_search and len(arg_search) >= 3:
@@ -85,7 +85,7 @@ def get_book_list():
     if arg_sort_by == "addedDESC":  # по убыванию названия дате добавления
         catalog_query = catalog_query.order_by(DBBooks.created_at.desc())
 
-
+    total_items_count = catalog_query.count()
     if arg_offset:
         catalog_query = catalog_query.offset(arg_offset)
     if arg_limit:
