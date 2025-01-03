@@ -22,7 +22,6 @@ def get_book_info(book_id: int):
     book = DBBooks.query.filter(DBBooks.book_id == book_id).first()
     if book:
         return jsonify(book.to_json()), 200
-
     return ExtensionsReturned.not_found("book_id", book_id)
 
 
@@ -50,6 +49,7 @@ def get_book_list():
     genres_id = request.args.getlist('genreID', int)
 
     catalog_query = DBBooks.query
+    total_items_count = DBBooks.query.count()
 
     # Поиск по названию и описанию
     if arg_search and len(arg_search) >= 3:
@@ -96,20 +96,16 @@ def get_book_list():
         result.append(item.to_json())
 
     return jsonify(
-        DBBooks.catalog_to_json(
+        DBBooks.list_to_json(
             result,
             arg_offset // arg_limit if arg_limit > 0 else 0,
-            len(result)
+            len(result),
+            total_items_count
         )
     ), 200
 
 
-
-
-
-
-
-
+# Test apis
 @book_api.route('/v1/books/<int:book_id>/setGenres', methods=['POST'])
 @jwt_required()
 def set_book_genres(book_id: int):
@@ -144,17 +140,6 @@ def set_book_genres(book_id: int):
         "bookID": book_id,
         "genreList": list(map(lambda x: x.name, DBGenre.query.filter(DBGenre.genre_id.in_(book_genres_id)).all()))
     }), 200
-
-
-
-
-
-
-
-
-
-
-
 
 
 @book_api.route('/v1/books/upload', methods=['POST'])
