@@ -55,9 +55,10 @@ class DBBooks(db.Model):
         return True
 
     @staticmethod
-    def catalog_to_json(catalog_list: list, page: int, count: int):
+    def list_to_json(catalog_list: list, page: int, per_page: int, total: int):
         return {
-            "catalog": catalog_list,
+            "pageItems": catalog_list,
+            "totalCount": total,
             "page": page,
-            "count": count
+            "perPage": per_page
         }
