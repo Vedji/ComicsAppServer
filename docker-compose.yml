@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./data:/app/data  # Подключаем папку data как volume
+      - /root/workdirect/volumes/ComicsAppVolume/data:/app/data  # Подключаем папку data как volume
     ports:
       - "5000:5000"  # Пробрасываем порт 5000 для Flask
     container_name: comics-app-container
