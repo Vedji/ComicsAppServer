@@ -27,16 +27,12 @@ def get_book_info(book_id: int):
 
 @book_api.route('/v1/books/<int:book_id>/getGenres', methods=['GET'])
 def get_book_genres(book_id: int):
-    book = DBBooks.query.filter(DBBooks.book_id == book_id).first()
+    book = DBBooks.query.filter_by(book_id = book_id).first()
     if not book:
         return ExtensionsReturned.not_found("Book", book_id)
-    result = []
-    genres = DBBooks.query.filter_by(book_id=book_id).first()
-    for genre_book in genres.genres:
-        result.append(genre_book.name)
     return jsonify({
         "bookID": book_id,
-        "genreList": result
+        "genreList": list(map(lambda x: x.name, book.genres))
     }), 200
 
 
