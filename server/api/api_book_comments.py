@@ -24,15 +24,16 @@ def get_book_comments_list(book_id: int):
     offset = request.args.get("offset", 0, int)
     if not DBBooks.query.filter_by(book_id = book_id).first():
         return ExtensionsReturned.not_found('book_id', book_id)
-    comments = DBBookComments.query.filter_by(book_id = book_id).limit(limit).offset(offset).all()
-    result = []
-    for item in comments:
-        result.append(item.to_json())
-    return jsonify(DBBookComments.to_list_json(
-        result,
-        len(result),
-        offset // limit if limit > 0 else 0
 
+    comment_query = DBBookComments.query
+    len_comments = comment_query.count()
+    comments = comment_query.filter_by(book_id = book_id).limit(limit).offset(offset).all()
+    result = [item.to_json() for item in comments]
+    return jsonify(DBBookComments.list_to_json(
+        result,
+        offset // limit if limit > 0 else 0,
+        len(result),
+        len_comments
     )), 200
 
 
