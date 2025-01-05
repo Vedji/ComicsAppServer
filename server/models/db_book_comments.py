@@ -30,13 +30,13 @@ class DBBookComments(DBModel, db.Model):
             "uploadDate": self.created_at.strftime(Config.DATE_FORMAT)
         }
 
-
     @staticmethod
-    def to_list_json(comments_list: list, count: int, page: int, **kwargs):
+    def list_to_json(comments_list: list, page: int, per_page: int, total: int):
         return {
-            "commentsList": comments_list,
+            "pageItems": comments_list,
+            "totalCount": total,
             "page": page,
-            "count": count
+            "perPage": per_page
         }
 
     def __repr__(self):
