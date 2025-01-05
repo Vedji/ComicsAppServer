@@ -70,11 +70,13 @@ def add_book_chapter(book_id: int):
 
     if not new_chapter.add_value():
         return ExtensionsReturned.upload_error("DBBookChapters", new_chapter.__repr__())
-    work_dir = (f"{Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY}\\manga"
+    work_dir = Config.linux_path(f"{Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY}\\manga"
                 f"\\book_{book_edit.book_id}\\chapter_{new_chapter.chapter_id}\\")
+    print(f"New chapter file path = '{work_dir}';")
     if os.path.exists(work_dir):
         shutil.rmtree(work_dir)
     os.mkdir(work_dir)
+    print(f"New chapter file path = '{work_dir}', chapter_exists = {os.path.exists(work_dir)};")
     return jsonify(new_chapter.to_json()), 200
 
 
