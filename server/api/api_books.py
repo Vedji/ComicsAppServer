@@ -13,8 +13,10 @@ from server.models.db_users import DBUser
 from server.models.db_genre import DBGenre
 from server.models.db_book_genres import DBBookGenre
 from server import db
+from server.exceptions import *
 
 book_api = Blueprint('book_api', __name__)
+register_error_handlers(book_api)
 
 
 @book_api.route('/v1/books/<int:book_id>/info', methods=['GET'])
@@ -22,14 +24,14 @@ def get_book_info(book_id: int):
     book = DBBooks.query.filter(DBBooks.book_id == book_id).first()
     if book:
         return jsonify(book.to_json()), 200
-    return ExtensionsReturned.not_found("book_id", book_id)
+    raise NotFound("Book", "", 404, book_id = book_id)
 
 
 @book_api.route('/v1/books/<int:book_id>/getGenres', methods=['GET'])
 def get_book_genres(book_id: int):
     book = DBBooks.query.filter_by(book_id = book_id).first()
     if not book:
-        return ExtensionsReturned.not_found("Book", book_id)
+        raise NotFound("Book", "", 404, book_id = book_id)
     return jsonify({
         "bookID": book_id,
         "genreList": list(map(lambda x: x.name, book.genres))
@@ -111,19 +113,21 @@ def set_book_genres(book_id: int):
     user_who_added = DBUser.query.filter(DBUser.user_id == current_user_id).first()
     book_edit = DBBooks.query.filter(DBBooks.book_id == book_id).first()
     if not user_who_added:
-        return ExtensionsReturned.not_found("DBUser", current_user_id)
+        raise NotFound("User", "", 404, user_id=current_user_id)
     if not book_edit:
-        return ExtensionsReturned.not_found("DBBooks", book_id)
+        raise NotFound("Book", "", 404, book_id=book_id)
     if book_edit.book_added_by != user_who_added.user_id and user_who_added.permission != 4:
-        return ExtensionsReturned.not_permission(user_who_added.user_id, user_who_added.permission)
-
-
+        raise NotPermission(
+            "SetBookGenres",
+            f"<User(user_id = {user_who_added.user_id}, permission = {user_who_added.permission})> "
+            f"has not permission to set genres for Book(book_id = {book_id})"
+        )
 
     book_genres_id = request.form.getlist("bookGenreID", int)
 
     checked = DBGenre.query.filter(DBGenre.genre_id.in_(book_genres_id)).all()
     if len(checked) != len(book_genres_id):
-        return ExtensionsReturned.invalid_field("book_genres_id", str(book_genres_id))
+        raise InvalidField("book_genres_id", book_genres_id)
 
     buffer = DBBookGenre.query.filter(DBBookGenre.book_id == book_id).all()
     for item in buffer:
@@ -132,6 +136,16 @@ def set_book_genres(book_id: int):
     for genre_id in book_genres_id:
         DBBookGenre(book_id=book_id, genre_id=genre_id).add_row()
 
+    try:
+        db.session.commit()
+    except Exception as err:
+        db.session.rollback()
+        raise DeleteError(
+            "Book",
+            err.__repr__(),
+            500,
+            book_id=current_user_id
+        )
 
     return jsonify({
         "bookID": book_id,
@@ -162,7 +176,7 @@ def upload_file():
 
 
     new_book = DBBooks(
-        book_added_by =  current_user_id,
+        book_added_by =  user_who_added.user_id,
         book_title = book_title,
         book_date_publication = book_date_publication,
         book_description = book_description,
