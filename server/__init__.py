@@ -1,33 +1,47 @@
 import logging
+
+import werkzeug.exceptions
+
+from server.exceptions import CustomException
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
-from flask import Flask
+from flask import Flask, jsonify
 from server.config import Config
-Config.load_config()
 
 
 
 app = Flask(__name__)
 
+@app.errorhandler(Exception)
+def handle_error(error: Exception):
+    code = 404
+    if "code" in dir(error):
+        code = error.__getattribute__("code")
+    e = CustomException(str(error), f"FlaskApp -> {type(error)}",code)
+    return e.response()
+
+Config.load_config()
 
 app.config['SQLALCHEMY_DATABASE_URI'] = Config.SQLALCHEMY_DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = Config.SQLALCHEMY_TRACK_MODIFICATIONS
-app.config['SQLALCHEMY_POOL_SIZE'] = Config.SQLALCHEMY_POOL_SIZE # Размер пула соединений
+app.config['SQLALCHEMY_POOL_SIZE'] = Config.SQLALCHEMY_POOL_SIZE  # Размер пула соединений
 app.config['SQLALCHEMY_POOL_TIMEOUT'] = Config.SQLALCHEMY_POOL_TIMEOUT  # Таймаут соединений
 app.config['SQLALCHEMY_POOL_RECYCLE'] = Config.SQLALCHEMY_POOL_RECYCLE  # Рецикл соединений
 app.config['SQLALCHEMY_MAX_OVERFLOW'] = Config.SQLALCHEMY_MAX_OVERFLOW  # Допустимое превышение пула
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = Config.SQLALCHEMY_ENGINE_OPTIONS
-
 
 app.config['JWT_SECRET_KEY'] = Config.JWT_SECRET_KEY
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = Config.JWT_REFRESH_TOKEN_EXPIRES
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = Config.JWT_REFRESH_TOKEN_EXPIRES
 
 
+
 db = SQLAlchemy(app)
 
 
 def create_app():
+
+
     JWTManager(app)
     from server.api.api_user import user_api
     from server.api.api_files import file_api
