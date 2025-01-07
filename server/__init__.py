@@ -16,7 +16,7 @@ def handle_error(error: Exception):
     if "code" in dir(error):
         code = error.__getattribute__("code")
     e = CustomException(str(error), f"FlaskApp -> {type(error)}",code)
-    return e.response()
+    return e.to_response()
 
 Config.load_config()
 
