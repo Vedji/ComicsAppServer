@@ -23,7 +23,6 @@ register_error_handlers(genre_api)
 def get_genre_list():
     genres = DBGenre.query.all()
     result = ApiResponse([ item.to_json() for item in genres ])
-    raise NotFound("Test Exception", 47)
     return result.response()
 
 
