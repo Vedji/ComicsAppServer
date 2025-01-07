@@ -33,7 +33,7 @@ fi
 REPO_URL="https://github.com/Vedji/ComicsAppServer.git"  # Замените на URL вашего репозитория
 
 echo "Cloning repository from $REPO_URL..."
-git clone "$REPO_URL" "$TARGET_DIR"
+git clone "$REPO_URL"
 
 # Проверка успешности клонирования
 if [ $? -ne 0 ]; then
