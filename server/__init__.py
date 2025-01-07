@@ -1,11 +1,9 @@
-import logging
 
-import werkzeug.exceptions
 
 from server.exceptions import CustomException
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
-from flask import Flask, jsonify
+from flask import Flask
 from server.config import Config
 
 

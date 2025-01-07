@@ -20,6 +20,8 @@ def user_login():
     email = request.form.get('email', "", str)
     password_hash = request.form.get('password')
 
+    print(username, email, password_hash)
+
     if not username and not email:
         raise InvalidField("username and email", None, "str")
     if not password_hash:
