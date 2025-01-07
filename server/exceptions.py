@@ -11,11 +11,12 @@ class CustomException(Exception):
         super().__init__(message, args)
 
     def to_response(self):
-        metadata = {
-            "error": self.error,
-            "status_code": self.status_code
+        data = {
+            "message": self.message,
+            "typeError": self.error,
+            "statusCode": self.status_code
         }
-        api_response = ApiResponse(data={"message": self.message}, metadata=metadata, status="error")
+        api_response = ApiResponse(data=data, status="error")
         return api_response.response(self.status_code)
 
 
