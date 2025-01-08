@@ -39,7 +39,7 @@ class ApiResponse:
             response["metadata"] = self.metadata
         return response
 
-    def response(self, code: int = 200):
+    def to_response(self, code: int = 200):
         return flask.jsonify(self.to_json()), code
 
 

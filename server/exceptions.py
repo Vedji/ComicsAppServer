@@ -17,7 +17,7 @@ class CustomException(Exception):
             "statusCode": self.status_code
         }
         api_response = ApiResponse(data=data, status="error")
-        return api_response.response(self.status_code)
+        return api_response.to_response(self.status_code)
 
 
 class InvalidField(CustomException):
