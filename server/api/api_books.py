@@ -14,6 +14,7 @@ from server.models.db_genre import DBGenre
 from server.models.db_book_genres import DBBookGenre
 from server import db
 from server.exceptions import *
+from server.api_response import ApiResponse
 
 book_api = Blueprint('book_api', __name__)
 register_error_handlers(book_api)
@@ -25,6 +26,20 @@ def get_book_info(book_id: int):
     if book:
         return jsonify(book.to_json()), 200
     raise NotFound("Book", "", 404, book_id = book_id)
+
+
+@book_api.route('/v2/books/<int:book_id>/info', methods=['GET'])
+def get_book_info_v2(book_id: int):
+    book = DBBooks.query.filter(DBBooks.book_id == book_id).first()
+    if book:
+        return ApiResponse(book.to_json()).to_response()
+    raise NotFound("Book", "")
+
+
+
+
+
+
 
 
 @book_api.route('/v1/books/<int:book_id>/getGenres', methods=['GET'])
