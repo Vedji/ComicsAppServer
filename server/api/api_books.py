@@ -28,7 +28,7 @@ def get_book_info(book_id: int):
     raise NotFound("Book", "", 404, book_id = book_id)
 
 
-@book_api.route('/v2/books/<int:book_id>/info', methods=['GET'])
+@book_api.route('/v2/books/<int:book_id>', methods=['GET'])
 def get_book_info_v2(book_id: int):
     book = DBBooks.query.filter(DBBooks.book_id == book_id).first()
     if book:
