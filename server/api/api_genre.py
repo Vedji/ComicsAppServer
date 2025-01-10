@@ -27,7 +27,7 @@ def get_genre_list():
     return result.to_response()
 
 
-@genre_api.route('/v2/books/<int:book_id>/getGenres', methods=['GET'])
+@genre_api.route('/v2/books/<int:book_id>/genres', methods=['GET'])
 def get_book_genres_v2(book_id: int):
     try:
         book = DBBooks.query.filter_by(book_id=book_id).first()
@@ -40,5 +40,12 @@ def get_book_genres_v2(book_id: int):
     except CustomException as error:
         return error.to_response()
 
+
+@genre_api.route('/v2/genres', methods=['GET'])
+def get_all_genres_v1():
+    try:
+        return ApiResponse([item.to_json() for item in DBGenre.query.all()]).to_response()
+    except CustomException as error:
+        return error.to_response()
 
 
