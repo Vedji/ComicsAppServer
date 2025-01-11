@@ -23,7 +23,7 @@ register_error_handlers(genre_api)
 @genre_api.route('/v1/genre/list', methods=['GET'])
 def get_genre_list():
     genres = DBGenre.query.all()
-    result = ApiResponse([ item.to_json() for item in genres ])
+    result = ApiResponse({"items": [ item.to_json() for item in genres ]})
     return result.to_response()
 
 
@@ -34,7 +34,7 @@ def get_book_genres_v2(book_id: int):
         if not book:
             raise NotFound("Book", book_id, "Book not found")
         if book and book.genres:
-            return ApiResponse([genre.to_json() for genre in book.genres]).to_response()
+            return ApiResponse({"items": [genre.to_json() for genre in book.genres]}).to_response()
         else:
             return ApiResponse([]).to_response()
     except CustomException as error:
