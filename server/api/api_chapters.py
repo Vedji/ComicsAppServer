@@ -8,6 +8,7 @@ from sqlalchemy import or_, not_
 
 from server import Config
 from server.api.extensions import ExtensionsReturned
+from server.exceptions import *
 from server.models.db_books import DBBooks
 from server.models.db_files import DBFiles
 from server.models.db_users import DBUser
@@ -29,6 +30,21 @@ def get_book_chapters_list(book_id: int):
     book_chapters.sort(key = lambda x: x["chapterNumber"])
     return jsonify(DBBookChapters.to_list_json(book_chapters, len(book_chapters), 0)), 200
 
+@book_chapters_api.route('/v2/books/<int:book_id>/chapters', methods=['GET'])
+def get_book_chapters_list_2(book_id: int):
+    try:
+        book = DBBooks.query.filter_by(book_id=book_id).first()
+        if not book:
+            raise NotFound("Book", book_id, "Book not found")
+        if book and book.chapters:
+            chapters = list(map(lambda chapter: chapter.to_json(), book.chapters))
+            chapters.sort(key=lambda x: x["chapterNumber"])
+            return ApiResponse(chapters).to_response()
+        else:
+            return ApiResponse([]).to_response()
+    except CustomException as error:
+        return error.to_response()
+
 
 @book_chapters_api.route('/v1/books/<int:book_id>/chapters/<int:chapter_id>', methods=['GET'])
 def get_book_chapter(book_id: int, chapter_id: int):
@@ -43,6 +59,23 @@ def get_book_chapter(book_id: int, chapter_id: int):
     if not chapter:
         return ExtensionsReturned.not_found("chapter", str(chapter_id))
     return jsonify(chapter.to_json()), 200
+
+
+@book_chapters_api.route('/v2/books/<int:book_id>/chapters/<int:chapter_id>', methods=['GET'])
+def get_book_chapter_v2(book_id: int, chapter_id: int):
+    try:
+        book = DBBooks.query.filter_by(book_id=book_id).first()
+        if not book:
+            raise NotFound("Book", book_id, "Book not found")
+        if book and book.chapters:
+            chapter = list(filter(lambda x: x.chapter_id == chapter_id, book.chapters))
+            if chapter and chapter[0]:
+                return ApiResponse(chapter[0].to_json()).to_response()
+            raise NotFound("Chapter", book_id, "Chapter not found")
+        else:
+            return ApiResponse({}).to_response()
+    except CustomException as error:
+        return error.to_response()
 
 
 @book_chapters_api.route('/v1/books/<int:book_id>/chapters', methods=['POST'])
