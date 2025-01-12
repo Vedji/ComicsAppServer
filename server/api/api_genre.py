@@ -34,7 +34,7 @@ def get_book_genres_v2(book_id: int):
         if not book:
             raise NotFound("Book", book_id, "Book not found")
         if book and book.genres:
-            return ApiResponse({"items": [genre.to_json() for genre in book.genres]}).to_response()
+            return ApiResponse([genre.to_json() for genre in book.genres]).to_response()
         else:
             return ApiResponse([]).to_response()
     except CustomException as error:
