@@ -148,6 +148,6 @@ def get_book_comments_list_v2(book_id: int):
                 metadata = ApiResponse.pagination(limit, offset, total_count)
             ).to_response()
         else:
-            return ApiResponse([]).to_response()
+            return ApiResponse([], metadata = ApiResponse.pagination(limit, offset, 0)).to_response()
     except CustomException as error:
         return error.to_response()
