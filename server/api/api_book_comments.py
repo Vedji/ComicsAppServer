@@ -4,9 +4,11 @@ from re import search
 from flask import Blueprint, jsonify, request, send_file
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy import or_, not_
+from sqlalchemy.testing.suite.test_reflection import metadata
 
 from server import Config
 from server.api.extensions import ExtensionsReturned
+from server.exceptions import *
 from server.models.db_books import DBBooks
 from server.models.db_files import DBFiles
 from server.models.db_users import DBUser
@@ -124,3 +126,28 @@ def delete_book_comment(book_id: int):
         return ExtensionsReturned.delete_error(str(comment))
 
     return jsonify(deleted_comment), 200
+
+
+@book_comments_api.route('/v2/book_comments/<int:book_id>', methods=['GET'])
+def get_book_comments_list_v2(book_id: int):
+    try:
+        limit = request.args.get("limit", 10, int)
+        offset = request.args.get("offset", 0, int)
+        book = DBBooks.query.filter_by(book_id=book_id).first()
+        if not book:
+            raise NotFound("Book", book_id, "Book not found")
+        if book and book.comments:
+            print(book.comments[0].user.to_json())
+            comments = book.comments
+            result = []
+            for comment in comments:
+                result.append(comment.to_json_v2())
+            total_count = len(result)
+            return ApiResponse(
+                result[offset:offset+limit],
+                metadata = ApiResponse.pagination(limit, offset, total_count)
+            ).to_response()
+        else:
+            return ApiResponse([]).to_response()
+    except CustomException as error:
+        return error.to_response()

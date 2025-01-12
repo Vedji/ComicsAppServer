@@ -32,3 +32,18 @@ class DBUser(db.Model):
             "permission": self.permission,
             "createdAt": self.created_at.strftime(Config.DATE_FORMAT)
         }
+
+    def to_json_briefly(self):
+        return {
+            "userID": self.user_id,
+            "username": self.username,
+            "userTitleImage": self.user_title_image,
+            "userDescription": self.user_description
+        }
+
+    def to_json_for_comments(self):
+        return {
+            "userID": self.user_id,
+            "username": self.username,
+            "userTitleImage": self.user_title_image
+        }

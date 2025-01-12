@@ -42,6 +42,24 @@ class ApiResponse:
     def to_response(self, code: int = 200):
         return flask.jsonify(self.to_json()), code
 
+    @staticmethod
+    def pagination(limit: int, offset: int, total_count: int) -> dict:
+        metadata = {
+                "total": total_count,  # Общее количество доступных элементов в наборе данных
+                "offset": offset,  # Текущее смещение — с какого элемента начинается текущая страница
+                "limit": limit,  # Количество элементов на одной странице (размер страницы)
+                # Флаг, указывающий, есть ли данные на следующей странице
+                "hasNext": (total_count - offset) > limit,
+                # Флаг, указывающий, есть ли данные на предыдущей странице
+                "hasPrevious": offset > 0,
+                # Логический номер текущей страницы, рассчитываемый как
+                "currentPage": (offset // limit if limit > 0 else 0),
+                # Общее количество страниц в наборе данных, рассчитываемое как (total / limit)
+                "totalPages": (total_count + limit - 1) // limit
+            }
+        return metadata
+
+
 
 if __name__ == "__main__":
     response_array = ApiResponse(
