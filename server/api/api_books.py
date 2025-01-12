@@ -28,12 +28,7 @@ def get_book_info(book_id: int):
     raise NotFound("Book", "", 404, book_id = book_id)
 
 
-@book_api.route('/v2/books/<int:book_id>', methods=['GET'])
-def get_book_info_v2(book_id: int):
-    book = DBBooks.query.filter(DBBooks.book_id == book_id).first()
-    if book:
-        return ApiResponse(book.to_json()).to_response()
-    raise NotFound("Book", "")
+
 
 
 
@@ -226,3 +221,74 @@ def upload_file():
         db.session.rollback()
         return ExtensionsReturned.upload_error("DBFiles", file_row)
     return jsonify(new_book.to_json())
+
+
+
+# Api v2
+
+
+@book_api.route('/v2/books', methods=['GET'])
+def get_book_list_v2():
+
+    try:
+        arg_limit = request.args.get("limit", 10, int)
+        arg_offset = request.args.get("offset", 0, int)
+        arg_search = request.args.get("search", '', str)
+        arg_sort_by = request.args.get("sortBy", '', str)
+        genres_id = request.args.getlist('genreID', int)
+        catalog_query = DBBooks.query
+
+        # Поиск по названию и описанию
+        if arg_search and len(arg_search) >= 3:
+            catalog_query = catalog_query.filter(
+                or_(
+                    DBBooks.book_title.like(f"%{arg_search}%"),
+                    DBBooks.book_description.like(f"%{arg_search}%")
+                )
+            )
+        #
+        if genres_id:
+            catalog_query = (
+                catalog_query
+                .join(DBBookGenre, DBBooks.book_id == DBBookGenre.book_id)
+                .join(DBGenre, DBBookGenre.genre_id == DBGenre.genre_id)
+                .filter(DBGenre.genre_id.in_(genres_id))
+            )
+        if arg_sort_by == "ratingASC":  # по возрастанию рейтинга
+            catalog_query = catalog_query.order_by(DBBooks.book_rating.asc())
+        if arg_sort_by == "ratingDESC":  # по убыванию рейтинга
+            catalog_query = catalog_query.order_by(DBBooks.book_rating.desc())
+        if arg_sort_by == "titleASC":  # по возрастанию названия
+            catalog_query = catalog_query.order_by(DBBooks.book_title.asc())
+        if arg_sort_by == "titleDESC":  # по убыванию названия
+            catalog_query = catalog_query.order_by(DBBooks.book_title.desc())
+        if arg_sort_by == "publishedASC":  # по возрастанию дате написания
+            catalog_query = catalog_query.order_by(DBBooks.book_date_publication.asc())
+        if arg_sort_by == "publishedDESC":  # по убыванию дате написания
+            catalog_query = catalog_query.order_by(DBBooks.book_date_publication.desc())
+        if arg_sort_by == "addedASC":  # по возрастанию дате добавления
+            catalog_query = catalog_query.order_by(DBBooks.created_at.asc())
+        if arg_sort_by == "addedDESC":  # по убыванию названия дате добавления
+            catalog_query = catalog_query.order_by(DBBooks.created_at.desc())
+        total_items_count = len(catalog_query.all())
+        if arg_offset:
+            catalog_query = catalog_query.offset(arg_offset)
+        if arg_limit:
+            catalog_query = catalog_query.limit(arg_limit)
+        result = []
+        for item in catalog_query.all():
+            result.append(item.to_json())
+        return ApiResponse(
+            data = result,
+            metadata = ApiResponse.pagination(arg_limit, arg_offset, total_items_count)
+        ).to_response()
+    except CustomException as error:
+        return error.to_response()
+
+
+@book_api.route('/v2/books/<int:book_id>', methods=['GET'])
+def get_book_info_v2(book_id: int):
+    book = DBBooks.query.filter(DBBooks.book_id == book_id).first()
+    if book:
+        return ApiResponse(book.to_json()).to_response()
+    raise NotFound("Book", "")
