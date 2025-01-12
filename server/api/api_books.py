@@ -235,7 +235,7 @@ def get_book_list_v2():
         arg_offset = request.args.get("offset", 0, int)
         arg_search = request.args.get("search", '', str)
         arg_sort_by = request.args.get("sortBy", '', str)
-        genres_id = request.args.getlist('genreID', int)
+        genres_id = request.args.getlist('genreId', int)
         catalog_query = DBBooks.query
 
         # Поиск по названию и описанию
