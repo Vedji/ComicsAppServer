@@ -2,6 +2,7 @@ import glob
 import logging
 import mimetypes
 import os.path
+import pprint
 from re import search
 import shutil
 from flask import Blueprint, jsonify, request, send_file
@@ -10,6 +11,7 @@ from sqlalchemy import or_, not_
 
 from server import Config
 from server.api.extensions import ExtensionsReturned
+from server.exceptions import *
 from server.models.db_books import DBBooks
 from server.models.db_chapter_pages import DBChapterPages
 from server.models.db_files import DBFiles
@@ -291,3 +293,32 @@ def delete_book_chapter_page(book_id: int, chapter_id: int, page_id: int):
         return ExtensionsReturned.upload_error("ExtensionsReturned", e)
     return jsonify(deleted_pages), 200
 
+
+# Api v2
+import time
+
+@book_chapter_pages_api.route('/v2/books/<int:book_id>/chapters/<int:chapter_id>/pages', methods=['GET'])
+def get_book_chapter_pages_list_v2(book_id: int, chapter_id: int):
+    try:
+
+        book: DBBooks = DBBooks.query.filter(DBBooks.book_id == book_id).first()
+        if not book:
+            raise NotFound("Book", book_id, "Book not found")
+        current_chapter: DBBookChapters = next(iter(filter(lambda x: x.chapter_id == chapter_id, book.chapters)), None)
+        pprint.pprint(current_chapter)
+        if not current_chapter:
+            raise NotFound("DBBookChapters", chapter_id, "DBBookChapters not found")
+        last_chapter: DBBookChapters = next(
+            (item for item in book.chapters if item.chapter_number == (current_chapter.chapter_number - 1)), None)
+        next_chapter: DBBookChapters = next(
+            (item for item in book.chapters if item.chapter_number == (current_chapter.chapter_number + 1)), None)
+        metadata = {
+            "lastItemId": last_chapter.chapter_id if last_chapter else -1,
+            "nextItemId": next_chapter.chapter_id if next_chapter else -1
+        }
+        return ApiResponse(
+            data = [item.to_json() for item in current_chapter.pages],
+            metadata = metadata
+        ).to_response()
+    except CustomException as error:
+        return error.to_response()
