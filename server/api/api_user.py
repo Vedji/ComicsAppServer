@@ -1,3 +1,5 @@
+import pprint
+
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from sqlalchemy import or_
@@ -232,5 +234,20 @@ def user_login_v2():
             }
         }
         return ApiResponse(data).to_response()
+    except CustomException as error:
+        return error.to_response()
+
+
+@user_api.route('/v1/user/comments', methods=['GET'])
+@jwt_required()
+def get_user_comments_v2():
+    try:
+        current_user_id = int(get_jwt_identity())
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+        pprint.pprint(user_who_request.comments)
+        comments = [comment.to_json_for_one_user() for comment in user_who_request.comments]
+        return ApiResponse(comments).to_response()
     except CustomException as error:
         return error.to_response()

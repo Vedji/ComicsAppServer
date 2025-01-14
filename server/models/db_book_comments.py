@@ -39,6 +39,15 @@ class DBBookComments(DBModel, db.Model):
             "uploadDate": self.created_at.strftime(Config.DATE_FORMAT),
             "aboutUser": self.user.to_json_for_comments()
         }
+
+    def to_json_for_one_user(self):
+        return {
+            "commentId": self.comment_id,
+            "bookId": self.book_id,
+            "rating": self.rating,
+            "comment": self.comment,
+            "uploadDate": self.created_at.strftime(Config.DATE_FORMAT),
+    }
     @staticmethod
     def list_to_json(comments_list: list, page: int, per_page: int, total: int):
         return {
