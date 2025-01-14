@@ -193,3 +193,44 @@ def delete_user_comment_for_book(book_id: int, comment_id: int):
         )
     return jsonify(comment_deleted), 200
 
+
+
+# Api v2 endpoints
+
+@user_api.route('/v2/user/login', methods=['POST'])
+def user_login_v2():
+    try:
+        username = request.form.get('username', "", str)
+        email = request.form.get('email', "", str)
+        password_hash = request.form.get('password')
+
+        if not username and not email:
+            raise InvalidField("username and email", None, "str")
+        if not password_hash:
+            raise InvalidField("password_hash", password_hash, "str")
+
+        user_query = DBUser.query
+        if not username and email:
+            user_query = user_query.filter(DBUser.email == email, DBUser.password_hash == password_hash)
+        elif username and not email:
+            user_query = user_query.filter(DBUser.username == username, DBUser.password_hash == password_hash)
+        elif username and email:
+            user_query = user_query.filter(or_(DBUser.username == username, DBUser.email == email),
+                                           DBUser.password_hash == password_hash)
+        user = user_query.first()
+        if not user:
+            raise AuthorizationError(f"<User(username = {username}, email = {email})>")
+
+        access_token = create_access_token(identity=str(user.user_id))
+        refresh_token = create_refresh_token(identity=str(user.user_id))
+        data = {
+            "aboutUser": user.to_json(),
+            "tokens": {
+                "accessToken": access_token,
+                "refreshToken": refresh_token,
+                "bcryptToken": "None"
+            }
+        }
+        return ApiResponse(data).to_response()
+    except CustomException as error:
+        return error.to_response()
