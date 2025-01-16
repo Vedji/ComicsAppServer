@@ -20,9 +20,20 @@ class DBUserFavorites(db.Model):
     def to_json(self) -> dict:
         return {
             "favoriteId": self.favorite_id,
-            "userID": self.user_id,
-            "bookID": self.book_id,
+            "userId": self.user_id,
+            "bookId": self.book_id,
+            "chapterId": -1 if not self.chapter else self.chapter.chapter_id,
             "uploadAt": self.created_at.strftime(Config.DATE_FORMAT)
+        }
+
+    @staticmethod
+    def default(user_id, book_id):
+        return {
+            "favoriteId": -1,
+            "userID": user_id,
+            "bookId": book_id,
+            "chapterId": -1,
+            "uploadAt": ""
         }
 
     def to_json_user_comments_list(self):

@@ -3,9 +3,11 @@ import pprint
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from sqlalchemy.exc import IntegrityError
 
 from server.api.extensions import ExtensionsReturned
 from server.exceptions import *
+from server.models.db_book_chapter import DBBookChapters
 from server.models.db_books import DBBooks
 from server.models.db_users import DBUser
 from server.models.db_user_favorites import DBUserFavorites
@@ -171,8 +173,90 @@ def get_user_favorite_list_v2():
         user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
         if not user_who_request:
             raise NotFound(f"<User(user_id = {current_user_id})>")
-        pprint.pprint(user_who_request.favorites)
-        pprint.pprint([i.to_json_user_comments_list() for i in user_who_request.favorites])
         return ApiResponse([i.to_json_user_comments_list() for i in user_who_request.favorites]).to_response()
     except CustomException as error:
         return error.to_response()
+
+
+@user_favorites_api.route('/v2/user/book/<int:book_id>/favorites', methods=['GET'])
+@jwt_required()
+def get_book_in_user_favorite_v2(book_id: int):
+    try:
+        current_user_id = get_jwt_identity()
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+        favorite = list(filter(lambda x: x.book_id == book_id, user_who_request.favorites))
+        if not favorite:
+            return ApiResponse(DBUserFavorites.default(user_who_request.user_id, book_id)).to_response()
+        pprint.pprint(favorite)
+        return ApiResponse(favorite[0].to_json()).to_response()
+    except CustomException as error:
+        return error.to_response()
+
+
+@user_favorites_api.route('/v2/user/book/<int:book_id>/favorites', methods=['PUT'])
+@jwt_required()
+def set_book_in_user_favorite_v2(book_id: int):
+    try:
+        chapter_id = request.form.get("chapterId", -1, int)
+        current_user_id = get_jwt_identity()
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+        book: DBBooks = DBBooks.query.filter(DBBooks.book_id == book_id).first()
+        if not book:
+            return NotFound("DBBooks", book_id).to_response()
+        if chapter_id > 0:
+            chapter: DBBookChapters = DBBookChapters.query.filter(DBBookChapters.chapter_id == chapter_id).first()
+            if not chapter:
+                return NotFound("DBBookChapters", chapter_id).to_response()
+        last_star: DBUserFavorites = DBUserFavorites.query.filter(
+            DBUserFavorites.user_id == user_who_request.user_id,
+            DBUserFavorites.book_id == book_id
+        ).first()
+        if last_star and chapter_id > 0:
+            last_star.chapter_id = chapter_id
+        elif last_star:
+            pass
+        else:
+            last_star = DBUserFavorites(
+                   user_id = user_who_request.user_id,
+                   book_id = book_id,
+                   chapter_id = chapter_id if chapter_id > 0 else 0,
+               )
+
+            db.session.add(last_star)
+        db.session.commit()
+        pprint.pprint(last_star)
+        return ApiResponse(last_star.to_json()).to_response()
+    except CustomException as error:
+        db.session.rollback()
+        return error.to_response()
+    except IntegrityError as err:
+        db.session.rollback()
+        return CustomException(err.__repr__()).to_response()
+
+@user_favorites_api.route('/v2/user/book/favorites/<int:favorite_id>', methods=['DELETE'])
+@jwt_required()
+def delete_book_in_user_favorite_v2(favorite_id: int):
+    try:
+        current_user_id = get_jwt_identity()
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+        favorite: DBUserFavorites = DBUserFavorites.query.filter(DBUserFavorites.favorite_id == favorite_id).first()
+        if not favorite:
+            return NotFound("DBUserFavorites", favorite_id).to_response()
+        buffer: dict = favorite.to_json()
+        db.session.delete(favorite)
+        db.session.commit()
+        pprint.pprint(favorite)
+        return ApiResponse(buffer).to_response()
+    except CustomException as error:
+        db.session.rollback()
+        return error.to_response()
+    except IntegrityError as err:
+        db.session.rollback()
+        return CustomException(err.__repr__()).to_response()
+    db.session.rollback()
