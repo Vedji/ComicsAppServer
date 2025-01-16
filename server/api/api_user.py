@@ -238,7 +238,31 @@ def user_login_v2():
         return error.to_response()
 
 
-@user_api.route('/v1/user/comments', methods=['GET'])
+@user_api.route('/v2/user/refreshToken', methods=['POST'])
+@jwt_required()
+def user_refresh_token_v2():
+    try:
+        current_user_id = int(get_jwt_identity())
+        user_who_request = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+
+        access_token = create_access_token(identity=str(user_who_request.user_id))
+        refresh_token = create_refresh_token(identity=str(user_who_request.user_id))
+        data = {
+            "aboutUser": user_who_request.to_json(),
+            "tokens": {
+                "accessToken": access_token,
+                "refreshToken": refresh_token,
+                "bcryptToken": "None"
+            }
+        }
+        return ApiResponse(data).to_response()
+    except CustomException as error:
+        return error.to_response()
+
+
+@user_api.route('/v2/user/comments', methods=['GET'])
 @jwt_required()
 def get_user_comments_v2():
     try:
@@ -251,3 +275,5 @@ def get_user_comments_v2():
         return ApiResponse(comments).to_response()
     except CustomException as error:
         return error.to_response()
+
+
