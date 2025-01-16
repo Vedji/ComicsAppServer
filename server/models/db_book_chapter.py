@@ -19,6 +19,7 @@ class DBBookChapters(db.Model, DBModel):
 
     book = relationship('DBBooks', back_populates='chapters')
     pages = relationship('DBChapterPages', back_populates='chapter')
+    favorites = relationship('DBUserFavorites', back_populates='chapter')
 
     def __repr__(self):
         return (f"<BookChapter(chapter_id={self.chapter_id}, chapter_title='{self.chapter_title}', "

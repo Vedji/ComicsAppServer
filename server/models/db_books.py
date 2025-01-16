@@ -5,8 +5,6 @@ from sqlalchemy.orm import relationship
 from server import db, Config
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, func, TIMESTAMP, DECIMAL
 from datetime import datetime
-from server.models.db_book_chapter import DBBookChapters
-
 
 
 class DBBooks(db.Model):
@@ -25,7 +23,7 @@ class DBBooks(db.Model):
     chapters = relationship('DBBookChapters', back_populates='book')
     genres = relationship('DBGenre', secondary='book_genres', back_populates='books')
     comments = relationship('DBBookComments', back_populates='book')
-    favorite_by = relationship('DBUserFavorites', back_populates='book')
+    favorite_by = relationship('DBUserFavorites',back_populates='book')
 
 
     def __repr__(self):

@@ -10,10 +10,12 @@ class DBUserFavorites(db.Model):
     favorite_id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
     book_id = Column(Integer, ForeignKey('books.book_id'), nullable=False)
+    chapter_id = Column(Integer, ForeignKey('book_chapters.chapter_id'), default=-1)
     created_at = Column(TIMESTAMP, server_default=db.func.current_timestamp(), nullable=True)
 
     user = relationship('DBUser', back_populates='favorites')
     book = relationship('DBBooks', back_populates='favorite_by')
+    chapter = relationship('DBBookChapters', back_populates='favorites')
 
     def to_json(self) -> dict:
         return {
@@ -21,6 +23,16 @@ class DBUserFavorites(db.Model):
             "userID": self.user_id,
             "bookID": self.book_id,
             "uploadAt": self.created_at.strftime(Config.DATE_FORMAT)
+        }
+
+    def to_json_user_comments_list(self):
+        return {
+            "favoriteId": self.favorite_id,
+            # "bookID": self.book_id,
+            "uploadAt": self.created_at.strftime(Config.DATE_FORMAT),
+            # "aboutUser": -1 if not self.user else self.user.to_json_briefly(),
+            "chapterId": -1 if not self.chapter else self.chapter.chapter_id,
+            "aboutBook":  -1 if not self.book else self.book.to_json(),
         }
 
     def __repr__(self):

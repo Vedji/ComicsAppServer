@@ -17,7 +17,7 @@ class DBUser(db.Model):
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), nullable=True)
 
     comments = relationship('DBBookComments', back_populates='user')
-    favorites = relationship('DBUserFavorites', back_populates='user')
+    favorites = relationship('DBUserFavorites',back_populates='user')
 
     def __repr__(self):
         return f"<User(user_id={self.user_id}, username='{self.username}', email='{self.email}')>"

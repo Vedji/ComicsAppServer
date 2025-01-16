@@ -1,8 +1,11 @@
 import logging
+import pprint
+
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from server.api.extensions import ExtensionsReturned
+from server.exceptions import *
 from server.models.db_books import DBBooks
 from server.models.db_users import DBUser
 from server.models.db_user_favorites import DBUserFavorites
@@ -149,3 +152,27 @@ def delete_book_in_user_favorite_list(book_id: int):
     return jsonify({
         "isBookInUserFavoriteList": False
     }), 200
+
+
+# Api v2
+
+
+@user_favorites_api.route('/v2/user/favorites', methods=['GET'])
+@jwt_required()
+def get_user_favorite_list_v2():
+    try:
+        current_user_id = get_jwt_identity()
+        arg_limit = request.args.get("limit", 10, int)
+        arg_offset = request.args.get("offset", 0, int)
+        if arg_limit < 0:
+            raise InvalidField("arg_limit", str(arg_limit),  "int", )
+        if arg_offset < 0:
+            raise InvalidField("arg_offset", str(arg_offset), "int", )
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+        pprint.pprint(user_who_request.favorites)
+        pprint.pprint([i.to_json_user_comments_list() for i in user_who_request.favorites])
+        return ApiResponse([i.to_json_user_comments_list() for i in user_who_request.favorites]).to_response()
+    except CustomException as error:
+        return error.to_response()
