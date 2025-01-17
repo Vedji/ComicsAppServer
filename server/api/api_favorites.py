@@ -199,7 +199,7 @@ def get_book_in_user_favorite_v2(book_id: int):
 @jwt_required()
 def set_book_in_user_favorite_v2(book_id: int):
     try:
-        chapter_id = request.form.get("chapterId", -1, int)
+        chapter_id = request.args.get("chapterId", -1, int)
         current_user_id = get_jwt_identity()
         user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
         if not user_who_request:

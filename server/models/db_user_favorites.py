@@ -1,3 +1,5 @@
+import pprint
+
 from sqlalchemy import Column, Integer, TIMESTAMP, ForeignKey
 from sqlalchemy.orm import relationship
 from server import db, Config
@@ -22,7 +24,7 @@ class DBUserFavorites(db.Model):
             "favoriteId": self.favorite_id,
             "userId": self.user_id,
             "bookId": self.book_id,
-            "chapterId": -1 if not self.chapter else self.chapter.chapter_id,
+            "chapterId": -1 if not self.chapter or not self.chapter_id else self.chapter.chapter_id,
             "uploadAt": self.created_at.strftime(Config.DATE_FORMAT)
         }
 
@@ -42,7 +44,7 @@ class DBUserFavorites(db.Model):
             # "bookID": self.book_id,
             "uploadAt": self.created_at.strftime(Config.DATE_FORMAT),
             # "aboutUser": -1 if not self.user else self.user.to_json_briefly(),
-            "chapterId": -1 if not self.chapter else self.chapter.chapter_id,
+            "chapterId": -1 if not self.chapter or not self.chapter_id else self.chapter.chapter_id,
             "aboutBook":  -1 if not self.book else self.book.to_json(),
         }
 
