@@ -1,4 +1,5 @@
 import os.path
+import pprint
 from re import search
 
 from flask import Blueprint, jsonify, request, send_file
@@ -137,7 +138,6 @@ def get_book_comments_list_v2(book_id: int):
         if not book:
             raise NotFound("Book", book_id, "Book not found")
         if book and book.comments:
-            print(book.comments[0].user.to_json())
             comments = book.comments
             result = []
             for comment in comments:
@@ -149,5 +149,35 @@ def get_book_comments_list_v2(book_id: int):
             ).to_response()
         else:
             return ApiResponse([], metadata = ApiResponse.pagination(limit, offset, 0)).to_response()
+    except CustomException as error:
+        return error.to_response()
+
+
+@book_comments_api.route('/v2/book_comments/<int:book_id>/user_comment', methods=['GET'])
+@jwt_required()
+def get_user_comment_for_book_v2(book_id: int):
+    try:
+        current_user_id = int(get_jwt_identity())
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+        book = DBBooks.query.filter_by(book_id=book_id).first()
+        if not book:
+            raise NotFound("Book", book_id, "Book not found")
+        user_comment = list(filter(lambda x: x.user_id == user_who_request.user_id, book.comments))
+        if not user_comment:
+            return ApiResponse({
+                "aboutUser": {
+                    "userID": user_who_request.user_id,
+                    "userTitleImage": user_who_request.user_title_image,
+                    "username": user_who_request.username
+                },
+                "bookId": book_id,
+                "comment": "",
+                "commentId": -1,
+                "rating": 0,
+                "uploadDate": ""
+            }).to_response()
+        return ApiResponse(user_comment[-1].to_json_v2()).to_response()
     except CustomException as error:
         return error.to_response()
