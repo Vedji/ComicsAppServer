@@ -244,6 +244,7 @@ def delete_user_comment_for_book_v2(comment_id: int):
             raise NotFound("DBBookComments", comment_id, "Comment for delete not found")
 
         comment_deleted = comment.to_json_v2()
+        comment_deleted["commentId"] = -1
         db.session.delete(comment)
         db.session.commit()
         return ApiResponse(comment_deleted).to_response()
