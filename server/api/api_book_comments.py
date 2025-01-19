@@ -181,3 +181,78 @@ def get_user_comment_for_book_v2(book_id: int):
         return ApiResponse(user_comment[-1].to_json_v2()).to_response()
     except CustomException as error:
         return error.to_response()
+
+
+@book_comments_api.route('/v2/book_comments/<int:book_id>/user_comment', methods=['PUT'])
+@jwt_required()
+def set_user_comment_for_book_v2(book_id: int):
+    try:
+        # Get comment body
+        rating = request.form.get("rating", -1, int)
+        comment_body = request.form.get("comment", "", str)
+        if rating <= 0 or rating > 5:
+            raise InvalidField("rating", rating, "Int[0:5]")
+        if len(comment_body) < 10:
+            raise InvalidField("comment", comment_body, "Str[len >= 10]")
+        # Get user info
+        current_user_id = int(get_jwt_identity())
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+        book: DBBooks = DBBooks.query.filter_by(book_id=book_id).first()
+        if not book:
+            raise NotFound("Book", book_id, "Book not found")
+        user_comments: list[DBBookComments] = list(filter(lambda x: x.user_id == user_who_request.user_id, book.comments))
+        if not user_comments:
+            new_comment: DBBookComments = DBBookComments(
+                user_id = user_who_request.user_id,
+                book_id = book.book_id,
+                rating = rating,
+                comment = comment_body
+            )
+            db.session.add(new_comment)
+            db.session.commit()
+            return ApiResponse(new_comment.to_json_v2()).to_response()
+        user_comment: DBBookComments = user_comments[-1]
+        user_comment.comment = comment_body
+        user_comment.rating = rating
+        db.session.commit()
+        return ApiResponse(user_comment.to_json_v2()).to_response()
+    except CustomException as error:
+        db.session.rollback()
+        return error.to_response()
+    except Exception as err:
+        db.session.rollback()
+        return CustomException(
+            message=err.__repr__(),
+            error=err.__class__
+        ).to_response()
+
+
+@book_comments_api.route('/v2/user/comments/<int:comment_id>', methods=['DELETE'])
+@jwt_required()
+def delete_user_comment_for_book_v2(comment_id: int):
+    try:
+        # Get user info
+        current_user_id = int(get_jwt_identity())
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+        comment: DBBookComments = DBBookComments.query.filter(DBBookComments.comment_id == comment_id).first()
+        pprint.pprint(comment)
+        if not comment:
+            raise NotFound("DBBookComments", comment_id, "Comment for delete not found")
+
+        comment_deleted = comment.to_json_v2()
+        db.session.delete(comment)
+        db.session.commit()
+        return ApiResponse(comment_deleted).to_response()
+    except CustomException as error:
+        db.session.rollback()
+        return error.to_response()
+    except Exception as err:
+        db.session.rollback()
+        return CustomException(
+            message=err.__repr__(),
+            error=err.__class__
+        ).to_response()
