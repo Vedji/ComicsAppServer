@@ -332,6 +332,7 @@ def update_books_v2():
             book_description = "New book description",
             book_isbn = " - "
             )
+            db.session.add(book)
             db.session.commit()
         if request_book_genres:
             deleted_genres = DBBookGenre.query.filter(DBBookGenre.book_id == book.book_id).all()
