@@ -314,6 +314,14 @@ def update_books_v2():
         request_book_title_image_id: int = request.form.get("bookTitleImageId", -1, int)
         request_new_chapter_seq = request.form.getlist("bookChaptersSequence", int)
 
+        print("request_book_id = ", request_book_id)
+        print("request_book_title = ", request_book_title)
+        print("request_book_genres = ", request_book_genres)
+        print("request_book_description = ", request_book_description)
+        print("request_book_date_of_publication = ", request_book_date_of_publication)
+        print("request_book_title_image_id = ", request_book_title_image_id)
+        print("request_new_chapter_seq = ", request_new_chapter_seq)
+
         book: DBBooks = DBBooks.query.filter(DBBooks.book_id == request_book_id).first()
         if not book:
             book = DBBooks(
@@ -326,6 +334,10 @@ def update_books_v2():
             )
             db.session.commit()
         if request_book_genres:
+            deleted_genres = DBBookGenre.query.filter(DBBookGenre.book_id == book.book_id).all()
+            for i in deleted_genres:
+                db.session.delete(i)
+            db.session.commit()
             for g_id in request_book_genres:
                 db.session.add(DBBookGenre(
                     book_id = book.book_id,
@@ -338,7 +350,7 @@ def update_books_v2():
         if request_book_date_of_publication:
             book.book_date_publication = request_book_date_of_publication
         if request_book_title_image_id and request_book_title_image_id > 20:
-            book.request_book_title_image_id = request_book_title_image_id
+            book.book_title_image = request_book_title_image_id
         if request_new_chapter_seq:
             chapters: list[DBBookChapters] = book.chapters
             for i in range(len(request_new_chapter_seq)):
