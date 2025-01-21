@@ -1,4 +1,5 @@
 import os.path
+import pprint
 from re import search
 
 from flask import Blueprint, jsonify, request
@@ -229,7 +230,6 @@ def upload_file():
 
 @book_api.route('/v2/books', methods=['GET'])
 def get_book_list_v2():
-
     try:
         arg_limit = request.args.get("limit", 10, int)
         arg_offset = request.args.get("offset", 0, int)
