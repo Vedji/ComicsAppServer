@@ -322,8 +322,8 @@ def update_books_v2():
         print("request_book_title_image_id = ", request_book_title_image_id)
         print("request_new_chapter_seq = ", request_new_chapter_seq)
 
-        book: DBBooks = DBBooks.query.filter(DBBooks.book_id == request_book_id).first()
-        if not book:
+
+        if request_book_id <= 0:
             book = DBBooks(
             book_added_by = user_who_request.user_id,
             book_title = "New book",
@@ -334,6 +334,10 @@ def update_books_v2():
             )
             db.session.add(book)
             db.session.commit()
+        else:
+            book: DBBooks = DBBooks.query.filter(DBBooks.book_id == request_book_id).first()
+        if not book:
+            raise NotFound("DBBooks", request_book_id)
         if request_book_genres:
             deleted_genres = DBBookGenre.query.filter(DBBookGenre.book_id == book.book_id).all()
             for i in deleted_genres:
