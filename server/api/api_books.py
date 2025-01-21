@@ -8,6 +8,7 @@ from sqlalchemy import or_, not_
 
 from server import Config
 from server.api.extensions import ExtensionsReturned
+from server.models.db_book_chapter import DBBookChapters
 from server.models.db_books import DBBooks
 from server.models.db_files import DBFiles
 from server.models.db_users import DBUser
@@ -292,3 +293,72 @@ def get_book_info_v2(book_id: int):
     if book:
         return ApiResponse(book.to_json()).to_response()
     raise NotFound("Book", "")
+
+
+@book_api.route('/v2/books', methods=['PUT'])
+@jwt_required()
+def update_books_v2():
+    try:
+        current_user_id = get_jwt_identity()
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+        if user_who_request.permission < 1:
+            raise NotPermission("upload file")
+
+        request_book_id = request.form.get("bookId", -1, int)
+        request_book_title = request.form.get("bookName", "", str)
+        request_book_genres: list[int] = request.form.getlist("bookGenres", int)
+        request_book_description: str = request.form.get("bookDescription", "", str)
+        request_book_date_of_publication: str = request.form.get("bookDateOfPublication", "", str)
+        request_book_title_image_id: int = request.form.get("bookTitleImageId", -1, int)
+        request_new_chapter_seq = request.form.getlist("bookChaptersSequence", int)
+
+        book: DBBooks = DBBooks.query.filter(DBBooks.book_id == request_book_id).first()
+        if not book:
+            book = DBBooks(
+            book_added_by = user_who_request.user_id,
+            book_title = "New book",
+            book_title_image = 4,
+            book_date_publication = "YYYY-mm-dd HH:MM:SS",
+            book_description = "New book description",
+            book_isbn = " - "
+            )
+            db.session.commit()
+        if request_book_genres:
+            for g_id in request_book_genres:
+                db.session.add(DBBookGenre(
+                    book_id = book.book_id,
+                    genre_id = g_id,
+                ))
+        if request_book_title:
+            book.book_title = request_book_title
+        if request_book_description:
+            book.book_description = request_book_description
+        if request_book_date_of_publication:
+            book.book_date_publication = request_book_date_of_publication
+        if request_book_title_image_id and request_book_title_image_id > 20:
+            book.request_book_title_image_id = request_book_title_image_id
+        if request_new_chapter_seq:
+            chapters: list[DBBookChapters] = book.chapters
+            for i in range(len(request_new_chapter_seq)):
+                buffer_chapter_id = request_new_chapter_seq[i]
+                buffer = list(filter(lambda x: buffer_chapter_id == x.chapter_id, chapters))
+                if not buffer:
+                    raise NotFound("DBComment", str(request_new_chapter_seq[i]))
+                buffer: DBBookChapters = buffer[0]
+                buffer.chapter_number = i
+            book.chapters = chapters
+        db.session.commit()
+        return ApiResponse(book.to_json()).to_response()
+    except CustomException as error:
+        db.session.rollback()
+        print(error)
+        return error.to_response()
+    except Exception as err:
+        db.session.rollback()
+        print(err)
+        return CustomException(
+            message=err.__repr__(),
+            error=err.__class__
+        ).to_response()
