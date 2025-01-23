@@ -272,3 +272,44 @@ def update_book_chapter_v2(book_id: int, chapter_id: int):
             message=err.__repr__(),
             error=err.__class__
         ).to_response()
+
+
+@book_chapters_api.route('/v2/books/<int:book_id>/chapters/<int:chapter_id>', methods=['DELETE'])
+@jwt_required()
+def delete_book_chapter_v2(book_id: int, chapter_id: int):
+    try:
+        current_user_id = get_jwt_identity()
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+        if user_who_request.permission < 1:
+            raise NotPermission("No permission for deleting")
+        book = DBBooks.query.filter(DBBooks.book_id == book_id).first()
+        if not book:
+            raise NotFound(f"DBBook(book_id = {book_id})")
+        chapter: DBBookChapters = DBBookChapters.query.filter(DBBookChapters.chapter_id == chapter_id).first()
+        if not chapter:
+            raise NotFound("DBBookChapters", chapter_id)
+        deleted_chapter = chapter.to_json()
+        chapters: list[DBBookChapters] = book.chapters
+        for page in chapter.pages:
+            db.session.delete(page)
+        chapters.remove(chapter)
+        db.session.delete(chapter)
+        db.session.commit()
+        book.chapters.sort(key = lambda x: x.chapter_number)
+        for i in range(0, len(book.chapters)):
+            book.chapters[i].chapter_number = i
+        db.session.commit()
+        return ApiResponse(deleted_chapter).to_response()
+    except CustomException as error:
+        db.session.rollback()
+        print(error)
+        return error.to_response()
+    except Exception as err:
+        db.session.rollback()
+        print(err)
+        return CustomException(
+            message=err.__repr__(),
+            error=err.__class__
+        ).to_response()
