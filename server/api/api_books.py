@@ -306,6 +306,7 @@ def update_books_v2():
         if user_who_request.permission < 1:
             raise NotPermission("upload file")
 
+        print(request.form)
         request_book_id = request.form.get("bookId", -1, int)
         request_book_title = request.form.get("bookName", "", str)
         request_book_genres: list[int] = request.form.getlist("bookGenres", int)

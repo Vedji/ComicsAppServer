@@ -10,6 +10,7 @@ from server import Config
 from server.api.extensions import ExtensionsReturned
 from server.exceptions import *
 from server.models.db_books import DBBooks
+from server.models.db_chapter_pages import DBChapterPages
 from server.models.db_files import DBFiles
 from server.models.db_users import DBUser
 from server.models.db_genre import DBGenre
@@ -204,3 +205,70 @@ def delete_book_chapter(book_id: int, chapter_id: int):
         logging.error(f"Ошибка при удалении: {e}, в модели {chapter_edit[0].__repr__()}.")
         db.session.rollback()
         return ExtensionsReturned.upload_error("ExtensionsReturned", chapter_edit[0].__repr__())
+
+# Api v2
+
+# FIXME: Edit adding pages
+@book_chapters_api.route('/v2/books/<int:book_id>/chapters/<int:chapter_id>', methods=['PUT'])
+@jwt_required()
+def update_book_chapter_v2(book_id: int, chapter_id: int):
+    try:
+        current_user_id = get_jwt_identity()
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {current_user_id})>")
+        if user_who_request.permission < 1:
+            raise NotPermission("upload file")
+        book = DBBooks.query.filter(DBBooks.book_id == book_id).first()
+        if not book:
+            raise NotFound(f"DBBook(book_id = {book_id})")
+        print(request.form)
+        request_chapter_title = request.form.get("chapterTitle", "", str)
+        request_pages_ids: list[int] = request.form.getlist("chapterPagesIds", int)
+        request_pages_images_ids: list[int] = request.form.getlist("chapterPagesImageIds", int)
+
+        print("request_chapter_title = ", request_chapter_title)
+        print("request_pages_ids = ", request_pages_ids)
+        print("request_pages_images_ids = ", request_pages_images_ids)
+
+        chapter:DBBookChapters = DBBookChapters.query.filter(DBBookChapters.chapter_id == chapter_id).first()
+        if not chapter:
+            chapter:DBBookChapters = DBBookChapters(
+                book_id = book_id,
+                chapter_number = len(book.chapters),
+                chapter_title = request_chapter_title,
+                added_by = user_who_request.user_id
+            )
+            db.session.add(chapter)
+            db.session.commit()
+        chapter.chapter_title = request_chapter_title
+        for page in list(filter(lambda x: x.chapter_id not in request_pages_ids, chapter.pages)):
+            db.session.delete(page)
+        for page_id in range(len(request_pages_ids)):
+            pages = list(filter(lambda x: x.page_id == request_pages_ids[page_id], chapter.pages))
+            if not pages and request_pages_ids[page_id] > 0:
+                raise NotFound(f"DBBookChapters(page_id = {request_pages_ids[page_id]})")
+            if not pages:
+                page = DBChapterPages(
+                    chapter_id = chapter.chapter_id,
+                    page_number = page_id,
+                    page_image_id = request_pages_images_ids[page_id],
+                    added_by = user_who_request.user_id
+                )
+                db.session.add(page)
+            else:
+                pages[0].page_number = page_id
+                pages[0].page_image_id = request_pages_images_ids[page_id]
+        db.session.commit()
+        return ApiResponse(chapter.to_json()).to_response()
+    except CustomException as error:
+        db.session.rollback()
+        print(error)
+        return error.to_response()
+    except Exception as err:
+        db.session.rollback()
+        print(err)
+        return CustomException(
+            message=err.__repr__(),
+            error=err.__class__
+        ).to_response()
