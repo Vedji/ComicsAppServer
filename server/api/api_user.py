@@ -277,3 +277,17 @@ def get_user_comments_v2():
         return error.to_response()
 
 
+@user_api.route('/v2/user/<int:user_id>/addedBooks', methods=['GET'])
+def get_user_added_books_v2(user_id: int):
+    try:
+        user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == user_id).first()
+        if not user_who_request:
+            raise NotFound(f"<User(user_id = {user_id})>")
+        pprint.pprint(user_who_request.comments)
+        added_books = [book.to_json() for book in DBBooks.query.filter(DBBooks.book_added_by == user_id).all()]
+        pprint.pprint(added_books)
+        return ApiResponse(added_books).to_response()
+    except CustomException as error:
+        return error.to_response()
+
+
