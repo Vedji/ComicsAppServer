@@ -53,17 +53,14 @@ def update_file_v2():
         user_who_request: DBUser = DBUser.query.filter(DBUser.user_id == current_user_id).first()
         if not user_who_request:
             raise NotFound(f"<User(user_id = {current_user_id})>")
-        if user_who_request.permission < 1:
+        if user_who_request.permission < 0:
             raise NotPermission("upload file")
         uploaded_file = request.files["uploadedFile"]
         mime_type = request.form.get("mimeType")
         server_file_path = "storage_v2/"
-        print(uploaded_file.__repr__())
-        print(f"MIME-тип: {mime_type}")
         if uploaded_file:
-            # Сохранение файла на сервере
             db_file = DBFiles(
-                added_by = user_who_request.user_id,  # Test user TODO: Add check permissions
+                added_by = user_who_request.user_id,
                 file_path = server_file_path,
                 file_name = "No saving_file",
                 file_type = mime_type,
@@ -71,26 +68,20 @@ def update_file_v2():
             db.session.add(db_file)
             db.session.commit()
             file_name = f"file_{db_file.file_id}." + mime_type.split("/")[-1]
-            print("File saved at: ", Config.linux_path(
-                    Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY +"/" + server_file_path + file_name))
             uploaded_file.save(
                 Config.linux_path(
                     Config.PROJECT_DIRECTORY + Config.DATA_DIRECTORY +"/" + server_file_path + file_name))
             db_file.file_name = file_name
             db.session.add(db_file)
             db.session.commit()
-            # Получение MIME-типа файла
-
             return ApiResponse(db_file.to_json()).to_response()
         else:
             raise NotFound("DBFile", "uploadedFile")
     except CustomException as error:
         db.session.rollback()
-        print(error)
         return error.to_response()
     except Exception as err:
         db.session.rollback()
-        print(err)
         return CustomException(
             message=err.__repr__(),
             error=err.__class__
