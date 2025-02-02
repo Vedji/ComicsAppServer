@@ -308,3 +308,49 @@ def edit_about_user_info_v2():
     except CustomException as error:
         return error.to_response()
 
+
+@user_api.route('/v2/user/registration', methods=['POST'])
+def registration_user_v2():
+    try:
+        input_username = request.form.get("username", type = str)
+        input_mail = request.form.get("mail", type = str)
+        input_password = request.form.get("password", type = str)
+
+        if not input_username:
+            raise InvalidField("username", input_username, "str")
+        if not input_mail:
+            raise InvalidField("mail", input_mail, "str")
+        if not input_password:
+            raise InvalidField("password", input_password, "str")
+
+        if DBUser.query.filter(or_(DBUser.username == input_username, DBUser.email == input_mail)).first():
+            raise ResourceHasExists("User")
+        new_user: DBUser = DBUser(
+            username = input_username,
+            email = input_mail,
+            password_hash = input_password
+        )
+        db.session.add(new_user)
+        db.session.commit()
+
+        access_token = create_access_token(identity=str(new_user.user_id))
+        refresh_token = create_refresh_token(identity=str(new_user.user_id))
+        data = {
+            "aboutUser": new_user.to_json(),
+            "tokens": {
+                "accessToken": access_token,
+                "refreshToken": refresh_token,
+                "bcryptToken": "None"
+            }
+        }
+        return ApiResponse(data).to_response(code=201)
+    except CustomException as error:
+        db.session.rollback()
+        return error.to_response()
+    except Exception as err:
+        db.session.rollback()
+        return CustomException(
+            message=err.__repr__(),
+            error=err.__class__
+        ).to_response()
+
