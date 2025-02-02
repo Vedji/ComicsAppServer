@@ -301,8 +301,12 @@ def edit_about_user_info_v2():
             raise NotFound(f"<User(user_id = {current_user_id})>")
         if input_image_id > 20:
             user_who_request.user_title_image = input_image_id
+        else:
+            user_who_request.user_title_image = 2
         if input_description:
             user_who_request.user_description = input_description
+        else:
+            user_who_request.user_description = None
         db.session.commit()
         return ApiResponse(user_who_request.to_json()).to_response()
     except CustomException as error:
