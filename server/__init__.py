@@ -7,7 +7,6 @@ import flask_monitoringdashboard as dashboard
 
 
 app = Flask(__name__)
-dashboard.bind(app)
 
 @app.errorhandler(Exception)
 def handle_error(error: Exception):
@@ -58,5 +57,5 @@ def create_app():
     app.register_blueprint(book_chapter_pages_api, url_prefix='/api')
     app.register_blueprint(user_favorites_api, url_prefix='/api')
 
-
+    dashboard.bind(app)
     return app
