@@ -1,14 +1,13 @@
-
-
 from server.exceptions import CustomException
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 from server.config import Config
-
+import flask_monitoringdashboard as dashboard
 
 
 app = Flask(__name__)
+dashboard.bind(app)
 
 @app.errorhandler(Exception)
 def handle_error(error: Exception):
